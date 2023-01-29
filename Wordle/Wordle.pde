@@ -1,169 +1,294 @@
-import tkinter as tk
-from tkinter import filedialog
-import os
-import time
-import datetime
+import java.util.*;
+import java.io.*;
 
-#Select your folder here
-dir = 'C:/Users/evank/OneDrive/Desktop/Test'
+TreeMap<Integer, Integer> dictionary;
+TreeMap<Integer, String> words;
+TreeMap<String, Integer> letVal = new TreeMap<String, Integer>();
+int letters = 5;
+boolean guessing = false;
+ArrayList<String> guess;
+ArrayList<String> colors;
+String suggestion = "";
+boolean outOfWords = false;
+int frameStore = 0;
 
-def select_file():
-    filepath = filedialog.askdirectory()
-    print(filepath)
-    
-now = time.time()
-
-    
-def deleteFiles(yearInt, monthInt, weekInt, dayInt, hourInt, minuteInt, keywordExlusion, typeExclusion):
-    if yearInt == "":
-        yearInt = 0
-        
-    if monthInt == "":
-        monthInt = 0
-        
-    if weekInt == "":
-        weekInt = 0
-     
-    if dayInt == "":
-        dayInt = 0
-        
-    if hourInt == "":
-        hourInt = 0   
-        
-    if minuteInt == "":
-        minuteInt = 0  
-    
-    minuteInt = int(minuteInt)
-    hourInt = int(hourInt)
-    dayInt = int(dayInt)
-    weekInt = int(weekInt)
-    monthInt = int(monthInt)
-    yearInt = int(yearInt)
-    
-    print(keywordExlusion, typeExclusion)
-    print(yearInt, monthInt, weekInt, dayInt, hourInt, minuteInt, keywordExlusion, typeExclusion)
-    if keywordExlusion == 'null':
-        keywordExlusion = ""
-    if typeExclusion == 'null':
-        typeExclusion = ""
-    files = os.listdir(dir)
-    listOfKeywordExlusions = keywordExlusion.split(",")
-    listOfTypeExclusions = typeExclusion.split(",")
-    
-    for file in files:
-        file_path = os.path.join(dir, file)
-        last_modified = os.path.getmtime(file_path)
-        last_modified_readable = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
-        difference = now - last_modified
-
-        print(difference)
-        
-        if difference > 60*minuteInt + 60*60*hourInt + 60*60*24*dayInt + 60*60*24*7*weekInt + 60*60*24*30*monthInt + 60*60*24*365*yearInt:
-            # file name with extension
-            file_name = os.path.basename(file_path)
-            
-            if not(os.path.splitext(file_name)[0] in listOfKeywordExlusions) and not(os.path.splitext(file_name)[1] in listOfTypeExclusions):
-                print("Deleting " + file_path + " because it was last modified at " + last_modified_readable)
-                os.remove(file_path)
-       
+void setup() {
+  size(800, 800);
+  guess = new ArrayList<String>();
+  colors = new ArrayList<String>();
+  BufferedReader reader = createReader("words.txt");
+  boolean temp = true;
+  words = new TreeMap<Integer, String>();
+  int iii = 0;
+  while (temp) {
+    String line;
+    try {
+      line = reader.readLine();
+    } 
+    catch (IOException e) {
+      e.printStackTrace();
+      line = null;
+    }
+    if (line == null) {
+      temp = false;
+    } else {
+      if (line.indexOf("1") == -1 && line.indexOf("2") == -1 && line.indexOf("3") == -1 && line.indexOf("4") == -1 && line.indexOf("5") == -1 &&
+        line.indexOf("6") == -1 && line.indexOf("7") == -1 && line.indexOf("8") == -1 && line.indexOf("9") == -1 && line.indexOf("0") == -1 &&
+        line.indexOf("&") == -1 && line.indexOf(".") == -1) {
+        words.put(iii, line);
+        iii++;
+      }
+    }
+  }
 
 
-def on_button_click():
-    print(var1.get(), var2.get())
-
-root = tk.Tk()
-root.title("Storage Saver")
-
-options = {"Option 1": 1, "Option 2": 2, "Option 3": 3}
-
-root.geometry("500x300")
-
-var1 = tk.StringVar(value="File Directory")
-var2 = tk.StringVar(value="Time")
-
-# dropdown1 = tk.OptionMenu(root, var1, *options)
-# dropdown1.pack()
+  for (int ii = 0; ii < words.size(); ii++) {
+    String s = words.get(ii);
+    for (int i = 0; i < s.length(); i++) {
+      String l = s.substring(i, i+1);
+      if (letVal.get(l) != null) {
+        int get = letVal.get(l);
+        letVal.put(l, get+1);
+      } else
+        letVal.put(l, 1);
+    }
+  }
 
 
+  dictionary = new TreeMap<Integer, Integer>();
+  int ii = 0;
+  for (int j = 0; j < words.size(); j++) {
+    String s = words.get(j);
+    int score = 0;
+    for (int i = 0; i < s.length(); i++) {
+      if (s.indexOf(s.substring(i, i+1)) == i)
+        score += letVal.get(s.substring(i, i+1));
+    }
+    dictionary.put(ii, score);
+    ii++;
+  }
+}
 
+void draw() {
+  if (!guessing) {
+    background(255);
+    fill(0);
+    textSize(20);
+    textAlign(CENTER);
+    text("How many letters?", width/2, height/8);
+    triangle(300, 150, 350, 150, 325, 200);
+    triangle(500, 200, 450, 200, 475, 150);
+    fill(255);
+    stroke(0);
+    rect(360, 130, 80, 100);
+    fill(0);
+    textSize(50);
+    text("" + letters, width/2, height/4);
+    fill(20, 200, 20);
+    rect(300, 400, 200, 100);
+    fill(0);
+    text("OK", width/2, 450);
+  } else {
+    background(255);
+    stroke(0);
+    for (int i = 0; i < letters; i++) {
+      if (colors.get(i).equals("gray"))
+        fill(175);
+      else if (colors.get(i).equals("yellow"))
+        fill(#E5E51E);
+      else
+        fill(20, 200, 20);
+      rect(100 + 600*i/letters, 100, 600/letters, 100);
+    }
+    fill(0);
+    for (int i = 0; i < letters; i++) {
+      if (guess.size() > i)
+        text(guess.get(i), 100 + 600/letters/2 + 600*i/letters, 160);
+    }
+    fill(200, 20, 20);
+    rect(width/2 - 150, height/2 + 100, 300, 100);
+    fill(0);
+    text("new word", width/2, height/2 + 150);
+    fill(20, 20, 200);
+    rect(0, 0, 50, 50);
+    fill(0);
+    textSize(16);
+    text("redo", 25, 25);
+    textSize(50);
+  }
+  if (outOfWords) {
+    background(255);
+    fill(0);
+    text("Out of words", width/2, height/2);
+  }
+}
 
+void mousePressed() {
+  if (!guessing) {
+    if (mouseX > 300 && mouseX < 350 && mouseY > 150 && mouseY < 200 && letters > 1)
+      letters--;
+    if (mouseX > 450 && mouseX < 500 && mouseY > 150 && mouseY < 200)
+      letters++;
+    if (mouseX > 300 && mouseX < 500 && mouseY > 400 && mouseY < 500) {
+      guessing = true;
+      for (int i = 0; i < letters; i++)
+        colors.add("gray");
 
-# dropdown = tk.OptionMenu(root, var2, "older", "younger", variable = var2)
-# dropdown.grid(row=0, column=4)
+      //Removes all words that aren't the right length
+      for (int i = 0; i < words.size(); i++) {
+        if (words.get(i).length() != letters) {
+          dictionary.remove(i);
+        } else {
+        }
+      }
 
+      recommend();
 
+      for (int i = 0; i < letters; i++) {
+        guess.add(suggestion.substring(i, i+1));
+      }
+    }
+  } else {
+    if (mouseY > 100 && mouseY < 200 && mouseX > 100 && mouseX < 700) {
+      int ind = letters*(mouseX-100)/600;
+      if (colors.get(ind).equals("gray"))
+        colors.set(ind, "yellow");
+      else if (colors.get(ind).equals("yellow"))
+        colors.set(ind, "green");
+      else if (colors.get(ind).equals("green"))
+        colors.set(ind, "gray");
+    }
+    if (mouseX > 250 && mouseX < 550 && mouseY < 600 && mouseY > 500) {
+      if (frameCount - frameStore > 10) {
+        frameStore = frameCount;
+        for (int i = 0; i < words.size(); i++) {
+          if (words.get(i).equals(suggestion)) {
+            dictionary.remove(i);
+          }
+        }
+        recommend();
 
-time_label = tk.Label(root, text="Time")
-time_label.grid(row=1, column=0)
+        for (int i = 0; i < letters; i++) {
+          guess.set(i, suggestion.substring(i, i+1));
+        }
+      }
+    }
+    if (mouseX < 50 && mouseY < 50) {
+      dictionary = new TreeMap<Integer, Integer>();
+      int ii = 0;
+      for (int j = 0; j < words.size(); j++) {
+        String s = words.get(j);
+        int score = 0;
+        for (int i = 0; i < s.length(); i++) {
+          if (s.indexOf(s.substring(i, i+1)) == i)
+            score += letVal.get(s.substring(i, i+1));
+        }
+        dictionary.put(ii, score);
+        ii++;
+      }
 
-yearsInput = tk.Entry(root)
-yearsInput.grid(row=1, column=1)
+      //Removes all words that aren't the right length
+      for (int i = 0; i < words.size(); i++) {
+        if (words.get(i).length() != letters) {
+          dictionary.remove(i);
+        } else {
+        }
+      }
 
-yearsLabel = tk.Label(root, text="years")
-yearsLabel.grid(row=1, column=2)
+      recommend();
 
-monthsInput = tk.Entry(root)
-monthsInput.grid(row=2, column=1)
+      for (int i = 0; i < letters; i++) {
+        guess.set(i, suggestion.substring(i, i+1));
+      }
+    }
+  }
+}
 
-monthsLabel = tk.Label(root, text="months")
-monthsLabel.grid(row=2, column=2)
+void keyPressed() {
+  if (guessing) {
+    if (key == BACKSPACE) {
+      if (guess.size() > 0)
+        guess.remove(guess.size()-1);
+    } else if (key == ENTER) {
+      calc();
+    } else {
+      guess.add(key + "");
+    }
+  }
+}
 
-weeksInput = tk.Entry(root)
-weeksInput.grid(row=3, column=1)
+public void calc() {
+  for (int i = 0; i < letters; i++) {
+    if (colors.get(i).equals("yellow")) {
+      for (int ii = 0; ii < words.size(); ii++) {
+        if (dictionary.containsKey(ii) && words.containsKey(ii)) {
+          if (words.get(ii).substring(i, i+1).equals(guess.get(i))) {
+            dictionary.remove(ii);
+            ii--;
+          } else {
+          }
+          if (words.get(ii).indexOf(guess.get(i)) == -1) {
+            dictionary.remove(ii);
+            ii--;
+          }
+        }
+      }
+    } else if (colors.get(i).equals("gray")) {
+      boolean temp = true;
+      for (int j = 0; j < letters; j++) {
+        if (!colors.get(j).equals("gray") && guess.get(j).equals(guess.get(i)))
+          temp = false;
+      }
+      for (int ii = 0; ii < words.size(); ii++) {
+        if (dictionary.containsKey(ii) && words.containsKey(ii) && temp) {
+          if (words.get(ii).indexOf(guess.get(i)) != -1) {
+            dictionary.remove(ii);
+            ii--;
+          } else {
+          }
+        }
+      }
+    } else {
+      for (int ii = 0; ii < words.size(); ii++) {
+        if (dictionary.containsKey(ii) && words.containsKey(ii)) {
+          if (!words.get(ii).substring(i, i+1).equals(guess.get(i))) {
+            dictionary.remove(ii);
+            ii--;
+          } else {
+          }
+        }
+      }
+    }
+  }
 
-weeksLabel = tk.Label(root, text="weeks")
-weeksLabel.grid(row=3, column=2)
+  recommend();
 
-daysInput = tk.Entry(root)
-daysInput.grid(row=4, column=1)
+  for (int i = 0; i < letters; i++) {
+    guess.set(i, suggestion.substring(i, i+1));
+    colors.set(i, "gray");
+  }
+}
 
-daysLabel = tk.Label(root, text="days")
-daysLabel.grid(row=4, column=2)
+public void recommend() {
+  int max = 0;
+  boolean temp = true;
+  while (temp) {
+    if (!dictionary.containsKey(max)) {
+      max++;
+    } else {
+      temp = false;
+    }
+  }
+  suggestion = words.get(max);
+  for (int i = 0; i < words.size(); i++) {
+    if (dictionary.containsKey(i) ) {
+      if (dictionary.get(i) > dictionary.get(max)) {
+        suggestion = words.get(i);
+        max = i;
+      }
+    }
+  }
 
-hoursInput = tk.Entry(root)
-hoursInput.grid(row=5, column=1)
-
-hoursLabel = tk.Label(root, text="hours")
-hoursLabel.grid(row=5, column=2)
-
-minutesInput = tk.Entry(root)
-minutesInput.grid(row=6, column=1)
-
-minutesLabel = tk.Label(root, text="minutes")
-minutesLabel.grid(row=6, column=2)
-
-
-keywordInput = tk.Entry(root)
-keywordInput.grid(row=8, column=1)
-
-KeywordLabel = tk.Label(root, text="Keywords")
-KeywordLabel.grid(row=8, column=2)
-
-typeInput = tk.Entry(root)
-typeInput.grid(row=9, column=1)
-
-typeLabel = tk.Label(root, text="File Type")
-typeLabel.grid(row=9, column=2)
-
-button = tk.Button(root, text="Submit", command=lambda: deleteFiles(yearsInput.get(), monthsInput.get(), weeksInput.get(), daysInput.get(), hoursInput.get(), minutesInput.get(), keywordInput.get(), typeInput.get()))
-button.grid(row=7,column=2)
-
-# dropdown2 = tk.OptionMenu(root, var2, "Option A", "Option B", "Option C")
-# dropdown2.pack()
-
-
-
-
-
-
-
-# hours_label = tk.Label(root, text="hours")
-# hours_label.grid(row=0, column=2)
-
-# minutes_input = tk.Entry(root)
-# minutes_input.grid(row=0, column=3)
-
-# minutes_label = tk.Label(root, text="minutes")
-# minutes_label.grid(row=0, column=4)
-
-root.mainloop()
+  if (dictionary.size() == 0)
+    outOfWords = true;
+}
